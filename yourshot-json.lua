@@ -17,8 +17,6 @@ host = "https://yourshot.nationalgeographic.com"
 wget.callbacks.get_urls = function(file, url, is_css, iri)
   local next_urls = { }
 
-  --os.execute("sleep 20")
-
   if string.match(url, host .. "/api") then  -- expect JSON
     local resp_fh = assert(io.open(file))
     local resp_json = resp_fh:read('*all')
