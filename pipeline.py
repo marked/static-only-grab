@@ -26,7 +26,7 @@ from seesaw.project import Project
 from seesaw.util import find_executable
 
 
-# check the seesaw version
+# check the seesaw version  #TODO
 if StrictVersion(seesaw.__version__) < StrictVersion('0.8.5'):
     raise Exception('This pipeline needs seesaw version 0.8.5 or higher.')
 
@@ -60,9 +60,9 @@ if not WGET_LUA:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20190909.02'
+VERSION = '20190928.00'
 USER_AGENT = 'ArchiveTeam'
-TRACKER_ID = 'sketch'
+TRACKER_ID = 'yourshot'
 TRACKER_HOST = 'tracker.archiveteam.org'
 
 
@@ -169,14 +169,14 @@ class WgetArgs(object):
         if d > 0:
             return self.int_to_str(d) + self.post_chars[m]
         return self.post_chars[m]
-
+### TODO ####
     def realize(self, item):
         wget_args = [
             WGET_LUA,
             '-U', USER_AGENT,
             '-nv',
             '--no-cookies',
-            '--lua-script', 'sketch.lua',
+            '--lua-script', 'yourshot-static.lua',
             '-o', ItemInterpolation('%(item_dir)s/wget.log'),
             '--no-check-certificate',
             '--output-document', ItemInterpolation('%(item_dir)s/wget.tmp'),
@@ -208,7 +208,7 @@ class WgetArgs(object):
 
         http_client = httpclient.HTTPClient()
 
-        if item_type == 'sketches':
+        if item_type == 'uri':
             r = http_client.fetch('http://103.230.141.2/sketch/' + item_value, method='GET')
             for s in r.body.decode('utf-8', 'ignore').splitlines():
                 s = s.strip()
@@ -216,7 +216,7 @@ class WgetArgs(object):
                     continue
                 wget_args.extend(['--warc-header', 'sketch-sketch-id: {}'.format(s)])
                 wget_args.append('https://sketch.sonymobile.com/api/1/sharedsketch/{}'.format(s))
-        elif item_type == 'user':
+        elif item_type == 'json':
             wget_args.extend(['--warc-header', 'sketch-user-id: '.format(item_value)])
             wget_args.append('https://sketch.sonymobile.com/api/1/artist/{}'.format(item_value))
         else:
@@ -239,10 +239,10 @@ class WgetArgs(object):
 # This will be shown in the warrior management panel. The logo should not
 # be too big. The deadline is optional.
 project = Project(
-    title = 'sketch',
+    title = 'yourshot-static',
     project_html = '''
-    <img class="project-logo" alt="logo" src="https://www.archiveteam.org/images/f/f6/Sketch_icon.png" height="50px"/>
-    <h2>sketch.sonymobile.com <span class="links"><a href="https://sketch.sonymobile.com">Website</a> &middot; <a href="http://tracker.archiveteam.org/sketch/">Leaderboard</a></span></h2>
+    <img class="project-logo" alt="logo" src="https://www.archiveteam.org/images/7/7a/Yourshot-logo.png" height="50px"/>
+    <h2>https://yourshot.nationalgeographic.com<span class="links"><a href="https://yourshot.nationalgeographic.com/">Website</a> &middot; <a href="http://tracker.archiveteam.org/yourshot-static/">Leaderboard</a></span></h2>
     '''
 )
 
@@ -250,11 +250,11 @@ pipeline = Pipeline(
     CheckIP(),
     GetItemFromTracker('http://%s/%s' % (TRACKER_HOST, TRACKER_ID), downloader,
         VERSION),
-    PrepareDirectories(warc_prefix='sketch'),
+    PrepareDirectories(warc_prefix='yourshot-static'),
     WgetDownload(
         WgetArgs(),
         max_tries=2,
-        accept_on_exit_code=[0, 4, 8],
+        accept_on_exit_code=[0, 4, 8],  # TODO
         env={
             'item_dir': ItemValue('item_dir'),
             'item_value': ItemValue('item_value'),
@@ -266,7 +266,7 @@ pipeline = Pipeline(
         defaults={'downloader': downloader, 'version': VERSION},
         file_groups={
             'data': [
-                ItemInterpolation('%(item_dir)s/%(warc_file_base)s.warc.gz')
+                ItemInterpolation('%(item_dir)s/%(warc_file_base)s.warc.gz')  # TODO
             ]
         },
         id_function=stats_id_function,
@@ -280,9 +280,9 @@ pipeline = Pipeline(
             downloader=downloader,
             version=VERSION,
             files=[
-                ItemInterpolation('%(data_dir)s/%(warc_file_base)s.warc.gz')
+                ItemInterpolation('%(data_dir)s/%(warc_file_base)s.warc.gz')   # TODO
             ],
-            rsync_target_source_path=ItemInterpolation('%(data_dir)s/'),
+            rsync_target_source_path=ItemInterpolation('%(data_dir)s/'),  # TODO
             rsync_extra_args=[
                 '--recursive',
                 '--partial',
