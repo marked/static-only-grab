@@ -25,6 +25,7 @@ from seesaw.pipeline import Pipeline
 from seesaw.project import Project
 from seesaw.util import find_executable
 
+import json
 
 # check the seesaw version  #TODO
 if StrictVersion(seesaw.__version__) < StrictVersion('0.8.5'):
@@ -63,7 +64,8 @@ if not WGET_LUA:
 VERSION = '20190928.00'
 USER_AGENT = 'ArchiveTeam'
 TRACKER_ID = 'yourshot'
-TRACKER_HOST = 'tracker.archiveteam.org'
+#TRACKER_HOST = 'tracker.archiveteam.org'  #prod
+TRACKER_HOST = 'localhost'  #dev
 
 
 ###########################################################################
@@ -148,7 +150,7 @@ def get_hash(filename):
 
 CWD = os.getcwd()
 PIPELINE_SHA1 = get_hash(os.path.join(CWD, 'pipeline.py'))
-LUA_SHA1 = get_hash(os.path.join(CWD, 'sketch.lua'))
+LUA_SHA1 = get_hash(os.path.join(CWD, 'yourshot-static.lua'))
 
 def stats_id_function(item):
     # NEW for 2014! Some accountability hashes and stats.
@@ -188,13 +190,13 @@ class WgetArgs(object):
             '--page-requisites',
             '--timeout', '30',
             '--tries', 'inf',
-            '--domains', 'sonymobile.com',
+            '--domains', 'nationalgeographic.com',
             '--span-hosts',
             '--waitretry', '30',
             '--warc-file', ItemInterpolation('%(item_dir)s/%(warc_file_base)s'),
             '--warc-header', 'operator: Archive Team',
-            '--warc-header', 'sketch-dld-script-version: ' + VERSION,
-            '--warc-header', ItemInterpolation('sketch-item: %(item_name)s'),
+            '--warc-header', 'yourshot-static-dld-script-version: ' + VERSION,
+            '--warc-header', ItemInterpolation('yourshot-static-item: %(item_name)s'),
             '--header', 'Accept-Encoding: gzip',
             '--compression', 'gzip'
         ]
@@ -208,17 +210,17 @@ class WgetArgs(object):
 
         http_client = httpclient.HTTPClient()
 
-        if item_type == 'uri':
-            r = http_client.fetch('http://103.230.141.2/sketch/' + item_value, method='GET')
+        if item_type == 'ys_static_json':
+            r = http_client.fetch('https://raw.githubusercontent.com/marked/yourshot-static-items/master/json/' + item_value, method='GET') #dev
+            #r = http_client.fetch('https://raw.githubusercontent.com/archiveteam/yourshot-static-items/master/json/' + item_value, method='GET') #prod
             for s in r.body.decode('utf-8', 'ignore').splitlines():
                 s = s.strip()
                 if len(s) == 0:
                     continue
-                wget_args.extend(['--warc-header', 'sketch-sketch-id: {}'.format(s)])
-                wget_args.append('https://sketch.sonymobile.com/api/1/sharedsketch/{}'.format(s))
-        elif item_type == 'json':
-            wget_args.extend(['--warc-header', 'sketch-user-id: '.format(item_value)])
-            wget_args.append('https://sketch.sonymobile.com/api/1/artist/{}'.format(item_value))
+                wget_args.extend(['--warc-header', 'yourshot-photo-id: {}'.format(s)])
+                print(s);
+                wget_args.append(s)
+        #elif item_type == 'ys_static_url':  #TODO
         else:
             raise Exception('Unknown item')
 
