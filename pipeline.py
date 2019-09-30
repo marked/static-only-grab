@@ -66,7 +66,7 @@ VERSION = '20190928.00'
 USER_AGENT = 'ArchiveTeam'
 TRACKER_ID = 'yourshot'
 #TRACKER_HOST = 'tracker.archiveteam.org'  #prod
-TRACKER_HOST = 'localhost'  #dev
+TRACKER_HOST = 'localhost'  #test
 
 
 ###########################################################################
@@ -245,8 +245,8 @@ class WgetArgs(object):
                     wget_urls.append(task_line)
 
             wget_args.extend(wget_urls)
-            print("\nD^      ", end="")
-            print("\nD^      ".join(defer_assets))
+            #print("\nD^      ", end="") #test
+            #print("\nD^      ".join(defer_assets)) #test
             http_client.close()
         else:
             raise Exception('Unknown item')
