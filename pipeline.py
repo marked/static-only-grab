@@ -186,13 +186,13 @@ class WgetArgs(object):
             '--truncate-output',
             '-e', 'robots=off',
             '--rotate-dns',
-            '--recursive', '--level=inf',
-            '--no-parent',
-            '--page-requisites',
+            #'--recursive', '--level=inf',
+            #'--no-parent',
+            #'--page-requisites',
             '--timeout', '30',
             '--tries', 'inf',
-            '--domains', 'nationalgeographic.com',
-            '--span-hosts',
+            #'--domains', 'nationalgeographic.com',
+            #'--span-hosts',
             '--waitretry', '30',
             '--warc-file', ItemInterpolation('%(item_dir)s/%(warc_file_base)s'),
             '--warc-header', 'operator: Archive Team',
@@ -212,30 +212,34 @@ class WgetArgs(object):
         http_client = httpclient.HTTPClient()
         #AsyncHTTPClient.configure(None, defaults=dict(user_agent="Wget/1.20.1 (linux-gnu")) #TODO
 
-        if item_type == 'ys_static_json':
-            r = http_client.fetch('https://raw.githubusercontent.com/marked/yourshot-static-items/master/json/' + item_value, method='GET') #dev
-            #r = http_client.fetch('https://raw.githubusercontent.com/archiveteam/yourshot-static-items/master/json/' + item_value, method='GET') #prod
-            for s in r.body.decode('utf-8', 'ignore').splitlines():
-                s = s.strip()
-                if len(s) == 0:
+        if item_type.startswith('ys_static_'):
+            wget_urls = []
+            item_type_dir = item_type.split('_',3)[2]
+            job_file_url = 'https://raw.githubusercontent.com/marked/yourshot-static-items/master/' + item_type_dir + '/' + item_value  #dev | #test
+            print("job location: " + job_file_url)  #debug
+            job_file_resp = http_client.fetch(job_file_url, method='GET') #dev
+            for task_line in job_file_resp.body.decode('utf-8', 'ignore').splitlines():
+                task_line = task_line.strip()
+                if len(task_line) == 0:
                     continue
-                #print(s) #debug
-                t = http_client.fetch(s, method='GET')
-                #print(t) #debug
-                obj = json.loads(t.body.decode('utf-8', 'ignore'))
-                #print(obj) #debug
-                uris = []
-                for jsresult in obj["results"]:
-                    wget_args.extend([  '--warc-header', 'yourshot-photo-id: {}'.format(jsresult["photo_id"])  ])
-                    for photo_size in jsresult["thumbnails"]:
-                        uris.append("https://yourshot.nationalgeographic.com" + jsresult["thumbnails"][photo_size])
-                #print(obj["count"]); #debug
-                wget_args.extend(uris[1:2]) #test
-        #elif item_type == 'ys_static_url':  #TODO
+                print(" " + task_line) #debug
+                if item_type == 'ys_static_json':
+                    task_line_resp = http_client.fetch(task_line, method='GET')
+                    photo_collection = json.loads(task_line_resp.body.decode('utf-8', 'ignore'))
+                    #print(photo_collection) #debug
+                    for photo_obj in photo_collection["results"]:
+                        wget_args.extend([  '--warc-header', 'yourshot-photo-id: {}'.format(photo_obj["photo_id"])  ])
+                        for photo_size in photo_obj["thumbnails"]:
+                            wget_urls.append("https://yourshot.nationalgeographic.com" + photo_obj["thumbnails"][photo_size])
+                        #print(photo_collection["count"]) #debug
+                elif item_type == 'ys_static_urls':
+                    wget_urls.append(task_line)
+
+            wget_args.extend(wget_urls)
+            http_client.close()
         else:
             raise Exception('Unknown item')
 
-        http_client.close()
 
         if 'bind_address' in globals():
             wget_args.extend(['--bind-address', globals()['bind_address']])
@@ -266,7 +270,7 @@ pipeline = Pipeline(
     PrepareDirectories(warc_prefix='yourshot-static'),
     WgetDownload(
         WgetArgs(),
-        max_tries=0,  # changed
+        max_tries=0,  # 2, # changed
         accept_on_exit_code=[0],  # [0, 4, 8],  # changed
         env={
             'item_dir': ItemValue('item_dir'),
