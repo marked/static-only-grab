@@ -27,16 +27,18 @@
     name is the name of the table (optional)
     indent is a first indentation (optional).
 --]]
+
+function table.count(t)
+  local n = 0
+  for _, _ in pairs(t) do n = n+1 end
+  return n
+end
+
 function table.show(t, name, indent)
   local cart    -- a container
   local autoref  -- for self references
 
   --[[ counts the number of elements in a table
-  local function tablecount(t)
-    local n = 0
-    for _, _ in pairs(t) do n = n+1 end
-    return n
-  end
   ]]
   -- (RiciLake) returns true if the table is empty
   local function isemptytable(t) return next(t) == nil end
