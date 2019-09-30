@@ -174,7 +174,6 @@ class WgetArgs(object):
         if d > 0:
             return self.int_to_str(d) + self.post_chars[m]
         return self.post_chars[m]
-### TODO ####
     def realize(self, item):
         wget_args = [
             WGET_LUA,
@@ -202,6 +201,7 @@ class WgetArgs(object):
             '--warc-header', ItemInterpolation('yourshot-static-item: %(item_name)s'),
             #'--header', 'Accept-Encoding: gzip',
             #'--compression', 'gzip'
+            ###changed flags####
         ]
 
         item_name = item['item_name']
@@ -281,8 +281,8 @@ pipeline = Pipeline(
     PrepareDirectories(warc_prefix='yourshot-static'),
     WgetDownload(
         WgetArgs(),
-        max_tries=0,  # 2, # changed
-        accept_on_exit_code=[0],  # [0, 4, 8],  # changed
+        max_tries=0,              # 2,          #changed
+        accept_on_exit_code=[0],  # [0, 4, 8],  #changed
         env={
             'item_dir': ItemValue('item_dir'),
             'item_value': ItemValue('item_value'),
@@ -294,7 +294,7 @@ pipeline = Pipeline(
         defaults={'downloader': downloader, 'version': VERSION},
         file_groups={
             'data': [
-                ItemInterpolation('%(item_dir)s/%(warc_file_base)s.warc.gz')  # TODO
+                ItemInterpolation('%(item_dir)s/%(warc_file_base)s.warc.gz')  #TODO
             ]
         },
         id_function=stats_id_function,
@@ -309,7 +309,7 @@ pipeline = Pipeline(
             version=VERSION,
             files=[
                 ItemInterpolation('%(data_dir)s/%(warc_file_base)s.warc.gz'),
-                ItemInterpolation('%(data_dir)s/%(warc_file_base)s.defer-urls.txt')
+                ItemInterpolation('%(data_dir)s/%(warc_file_base)s.defer-urls.txt')  #added
             ],
             rsync_target_source_path=ItemInterpolation('%(data_dir)s/'),
             rsync_extra_args=[
