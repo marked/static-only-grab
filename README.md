@@ -1,4 +1,4 @@
-# yourshot-json-grab
+# yourshot-static-grab
 Parses JSON API, grabs URLs (images or html)
 
 Example
