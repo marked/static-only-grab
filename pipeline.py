@@ -214,27 +214,34 @@ class WgetArgs(object):
 
         if item_type.startswith('ys_static_'):
             wget_urls = []
+            defer_assets = []
             item_type_dir = item_type.split('_',3)[2]
             job_file_url = 'https://raw.githubusercontent.com/marked/yourshot-static-items/master/' + item_type_dir + '/' + item_value  #dev | #test
-            print("job location: " + job_file_url)  #debug
+            print("Job location: " + job_file_url)  #debug
             job_file_resp = http_client.fetch(job_file_url, method='GET') #dev
             for task_line in job_file_resp.body.decode('utf-8', 'ignore').splitlines():
                 task_line = task_line.strip()
                 if len(task_line) == 0:
                     continue
-                print(" " + task_line) #debug
                 if item_type == 'ys_static_json':
+                    print("Tv  " + task_line) #debug
                     task_line_resp = http_client.fetch(task_line, method='GET')
                     api_resp = json.loads(task_line_resp.body.decode('utf-8', 'ignore'))
                     print("   IDs: {}".format(api_resp["count"])) #debug
-                    for photo_obj in api_resp["results"]:
+                    for photo_obj in api_resp["results"][1:3]: #test
                         wget_args.extend([  '--warc-header', 'yourshot-photo-id: {}'.format(photo_obj["photo_id"])  ])
                         for photo_size in photo_obj["thumbnails"]:
                             wget_urls.append("https://yourshot.nationalgeographic.com" + photo_obj["thumbnails"][photo_size])
+                        defer_assets.append(photo_obj["detail_url"])
+                        defer_assets.append(photo_obj["owner"]["profile_url"])
+                        defer_assets.append(photo_obj["owner"]["avatar_url"])
                 elif item_type == 'ys_static_urls':
+                    print("T>  " + task_line) #debug
                     wget_urls.append(task_line)
 
             wget_args.extend(wget_urls)
+            print("\nD^      ", end="")
+            print("\nD^      ".join(defer_assets))
             http_client.close()
         else:
             raise Exception('Unknown item')
