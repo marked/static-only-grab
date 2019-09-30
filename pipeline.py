@@ -209,8 +209,8 @@ class WgetArgs(object):
         item['item_type'] = item_type
         item['item_value'] = item_value
 
+        httpclient.AsyncHTTPClient.configure(None, defaults=dict(user_agent=USER_AGENT))
         http_client = httpclient.HTTPClient()
-        #AsyncHTTPClient.configure(None, defaults=dict(user_agent="Wget/1.20.1 (linux-gnu")) #TODO
 
         if item_type.startswith('ys_static_'):
             wget_urls = []
@@ -225,13 +225,12 @@ class WgetArgs(object):
                 print(" " + task_line) #debug
                 if item_type == 'ys_static_json':
                     task_line_resp = http_client.fetch(task_line, method='GET')
-                    photo_collection = json.loads(task_line_resp.body.decode('utf-8', 'ignore'))
-                    #print(photo_collection) #debug
-                    for photo_obj in photo_collection["results"]:
+                    api_resp = json.loads(task_line_resp.body.decode('utf-8', 'ignore'))
+                    print("   IDs: {}".format(api_resp["count"])) #debug
+                    for photo_obj in api_resp["results"]:
                         wget_args.extend([  '--warc-header', 'yourshot-photo-id: {}'.format(photo_obj["photo_id"])  ])
                         for photo_size in photo_obj["thumbnails"]:
                             wget_urls.append("https://yourshot.nationalgeographic.com" + photo_obj["thumbnails"][photo_size])
-                        #print(photo_collection["count"]) #debug
                 elif item_type == 'ys_static_urls':
                     wget_urls.append(task_line)
 

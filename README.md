@@ -9,6 +9,5 @@ OR
 
 run-pipeline pipeline.py $USERNAME
 
-TODO: fix UA from python causing timeouts
 TODO: write interesting things to files
 TODO: check rsync inclusion of all files
