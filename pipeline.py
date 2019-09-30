@@ -141,6 +141,8 @@ class MoveFiles(SimpleTask):
 
         os.rename('%(item_dir)s/%(warc_file_base)s.warc.gz' % item,
               '%(data_dir)s/%(warc_file_base)s.warc.gz' % item)
+        os.rename('%(item_dir)s/%(warc_file_base)s.defer-urls.txt' % item,
+              '%(data_dir)s/%(warc_file_base)s.defer-urls.txt' % item)
 
         shutil.rmtree('%(item_dir)s' % item)
 
@@ -228,13 +230,16 @@ class WgetArgs(object):
                     task_line_resp = http_client.fetch(task_line, method='GET')
                     api_resp = json.loads(task_line_resp.body.decode('utf-8', 'ignore'))
                     print("   IDs: {}".format(api_resp["count"])) #debug
-                    for photo_obj in api_resp["results"][1:3]: #test
+                    for photo_obj in api_resp["results"]:   #[1:3]: #test
                         wget_args.extend([  '--warc-header', 'yourshot-photo-id: {}'.format(photo_obj["photo_id"])  ])
                         for photo_size in photo_obj["thumbnails"]:
                             wget_urls.append("https://yourshot.nationalgeographic.com" + photo_obj["thumbnails"][photo_size])
                         defer_assets.append(photo_obj["detail_url"])
                         defer_assets.append(photo_obj["owner"]["profile_url"])
                         defer_assets.append(photo_obj["owner"]["avatar_url"])
+                    with open('%(item_dir)s/%(warc_file_base)s.defer-urls.txt' % item, 'w') as fh:
+                        fh.writelines("%s\n" % asset for asset in defer_assets)
+                    fh.close()
                 elif item_type == 'ys_static_urls':
                     print("T>  " + task_line) #debug
                     wget_urls.append(task_line)
@@ -303,9 +308,10 @@ pipeline = Pipeline(
             downloader=downloader,
             version=VERSION,
             files=[
-                ItemInterpolation('%(data_dir)s/%(warc_file_base)s.warc.gz')   # TODO
+                ItemInterpolation('%(data_dir)s/%(warc_file_base)s.warc.gz'),
+                ItemInterpolation('%(data_dir)s/%(warc_file_base)s.defer-urls.txt')
             ],
-            rsync_target_source_path=ItemInterpolation('%(data_dir)s/'),  # TODO
+            rsync_target_source_path=ItemInterpolation('%(data_dir)s/'),
             rsync_extra_args=[
                 '--recursive',
                 '--partial',

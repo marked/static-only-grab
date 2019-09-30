@@ -9,5 +9,4 @@ OR
 
 run-pipeline pipeline.py $USERNAME
 
-TODO: write interesting things to files
-TODO: check rsync inclusion of all files
+TODO: add check that wget got the same # of URLs as python sent
