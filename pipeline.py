@@ -41,6 +41,7 @@ if StrictVersion(seesaw.__version__) < StrictVersion('0.8.5'):
 WGET_LUA = find_executable(
     'Wget+Lua',
     ['GNU Wget 1.20.3-at-lua'],
+    #['GNU Wget 1.14.lua.20160530-955376b'],
     [
         './wget-lua',
         './wget-lua-warrior',
@@ -197,8 +198,8 @@ class WgetArgs(object):
             '--warc-header', 'operator: Archive Team',
             '--warc-header', 'yourshot-static-dld-script-version: ' + VERSION,
             '--warc-header', ItemInterpolation('yourshot-static-item: %(item_name)s'),
-            '--header', 'Accept-Encoding: gzip',
-            '--compression', 'gzip'
+            #'--header', 'Accept-Encoding: gzip',
+            #'--compression', 'gzip'
         ]
 
         item_name = item['item_name']
@@ -209,7 +210,7 @@ class WgetArgs(object):
         item['item_value'] = item_value
 
         http_client = httpclient.HTTPClient()
-        #AsyncHTTPClient.configure(None, defaults=dict(user_agent="Wget/1.20.1 (linux-gnu"))
+        #AsyncHTTPClient.configure(None, defaults=dict(user_agent="Wget/1.20.1 (linux-gnu")) #TODO
 
         if item_type == 'ys_static_json':
             r = http_client.fetch('https://raw.githubusercontent.com/marked/yourshot-static-items/master/json/' + item_value, method='GET') #dev
@@ -228,8 +229,8 @@ class WgetArgs(object):
                     wget_args.extend([  '--warc-header', 'yourshot-photo-id: {}'.format(jsresult["photo_id"])  ])
                     for photo_size in jsresult["thumbnails"]:
                         uris.append("https://yourshot.nationalgeographic.com" + jsresult["thumbnails"][photo_size])
-                print(obj["count"]); #debug
-                wget_args.extend(uris)
+                #print(obj["count"]); #debug
+                wget_args.extend(uris[1:2]) #test
         #elif item_type == 'ys_static_url':  #TODO
         else:
             raise Exception('Unknown item')
@@ -265,8 +266,8 @@ pipeline = Pipeline(
     PrepareDirectories(warc_prefix='yourshot-static'),
     WgetDownload(
         WgetArgs(),
-        max_tries=2,
-        accept_on_exit_code=[0, 4, 8],  # TODO
+        max_tries=0,  # changed
+        accept_on_exit_code=[0],  # [0, 4, 8],  # changed
         env={
             'item_dir': ItemValue('item_dir'),
             'item_value': ItemValue('item_value'),

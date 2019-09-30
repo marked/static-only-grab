@@ -84,13 +84,23 @@ end
 
 wget.callbacks.before_exit = function(exit_status, exit_status_string)
   io.stdout:write(table.show(code_counts,'\nResponse Code Frequency'))
+  io.stdout:write("Received: " .. exit_status .. exit_status_string .. "\n")
   io.stdout:flush()
 
   if abortgrab == true then
+    io.stdout:write("Abort/Sending: " .. "wget.exits.IO_FAIL\n\n")
     return wget.exits.IO_FAIL
   end
+  if code_counts[200] > 0 and table.count(code_counts) == 1  then  -- TODO: check total URIs
+    io.stdout:write("Sending: " .. "wget.exits.SUCCESS\n\n")
+    return wget.exits.SUCCESS
+  else
+    io.stdout:write("Sending: " .. "wget.exits.NETWORK_FAIL\n\n")
+    return wget.exits.NETWORK_FAIL
+  end
 
-  return exit_status
+  io.stdout:write("Sending: " .. "wget.exits.UNKNOWN\n\n")
+  return wget.exits.UNKNOWN
 end
 
 ------------------------------------------------------------------------------------------------
