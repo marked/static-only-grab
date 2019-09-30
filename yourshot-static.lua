@@ -4,8 +4,9 @@ local item_type = os.getenv('item_type')
 local item_value = os.getenv('item_value')
 local item_dir = os.getenv('item_dir')
 local warc_file_base = os.getenv('warc_file_base')
+local todo_url_count = os.getenv('todo_url_count')
 
-local url_count = 0
+local done_url_count = 0
 local abortgrab = false
 local code_counts = { }
 
@@ -57,8 +58,8 @@ end
 wget.callbacks.httploop_result = function(url, err, http_stat)
   status_code = http_stat["statcode"]
 
-  url_count = url_count + 1
-  io.stdout:write(url_count .. "=" .. status_code .. " " .. url["url"] .. "  \n")
+  done_url_count = done_url_count + 1
+  io.stdout:write(done_url_count .. "=" .. status_code .. " " .. url["url"] .. "  \n")
   io.stdout:flush()
 
   if code_counts[status_code] == nil then
@@ -91,7 +92,7 @@ wget.callbacks.before_exit = function(exit_status, exit_status_string)
     io.stdout:write("Abort/Sending: " .. "wget.exits.IO_FAIL\n\n")
     return wget.exits.IO_FAIL
   end
-  if code_counts[200] > 0 and table.count(code_counts) == 1  then  -- TODO: check total URIs
+  if code_counts[200] == todo_url_count and table.count(code_counts) == 1 and todo_url_count > 0 then
     io.stdout:write("Sending: " .. "wget.exits.SUCCESS\n\n")
     return wget.exits.SUCCESS
   else
