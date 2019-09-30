@@ -174,7 +174,7 @@ class WgetArgs(object):
 ### TODO ####
     def realize(self, item):
         wget_args = [
-            WGET_LUA,
+            'echo', WGET_LUA,
             '-U', USER_AGENT,
             '-nv',
             '--no-cookies',
@@ -209,6 +209,7 @@ class WgetArgs(object):
         item['item_value'] = item_value
 
         http_client = httpclient.HTTPClient()
+        #AsyncHTTPClient.configure(None, defaults=dict(user_agent="Wget/1.20.1 (linux-gnu"))
 
         if item_type == 'ys_static_json':
             r = http_client.fetch('https://raw.githubusercontent.com/marked/yourshot-static-items/master/json/' + item_value, method='GET') #dev
@@ -217,9 +218,18 @@ class WgetArgs(object):
                 s = s.strip()
                 if len(s) == 0:
                     continue
-                wget_args.extend(['--warc-header', 'yourshot-photo-id: {}'.format(s)])
-                print(s);
-                wget_args.append(s)
+                #print(s) #debug
+                t = http_client.fetch(s, method='GET')
+                #print(t) #debug
+                obj = json.loads(t.body.decode('utf-8', 'ignore'))
+                #print(obj) #debug
+                urls = []
+                for jsresult in obj["results"]:
+                    wget_args.extend([  '--warc-header', 'yourshot-photo-id: {}'.format(jsresult["photo_id"])  ])
+                    for photo_size in jsresult["thumbnails"]:
+                        urls.append(jsresult["thumbnails"][photo_size])
+                print(obj["count"]); #debug
+                wget_args.append(''.join(urls))
         #elif item_type == 'ys_static_url':  #TODO
         else:
             raise Exception('Unknown item')
