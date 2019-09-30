@@ -174,7 +174,7 @@ class WgetArgs(object):
 ### TODO ####
     def realize(self, item):
         wget_args = [
-            'echo', WGET_LUA,
+            WGET_LUA,
             '-U', USER_AGENT,
             '-nv',
             '--no-cookies',
@@ -223,13 +223,13 @@ class WgetArgs(object):
                 #print(t) #debug
                 obj = json.loads(t.body.decode('utf-8', 'ignore'))
                 #print(obj) #debug
-                urls = []
+                uris = []
                 for jsresult in obj["results"]:
                     wget_args.extend([  '--warc-header', 'yourshot-photo-id: {}'.format(jsresult["photo_id"])  ])
                     for photo_size in jsresult["thumbnails"]:
-                        urls.append(jsresult["thumbnails"][photo_size])
+                        uris.append("https://yourshot.nationalgeographic.com" + jsresult["thumbnails"][photo_size])
                 print(obj["count"]); #debug
-                wget_args.append(''.join(urls))
+                wget_args.extend(uris)
         #elif item_type == 'ys_static_url':  #TODO
         else:
             raise Exception('Unknown item')
