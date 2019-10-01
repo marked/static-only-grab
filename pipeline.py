@@ -113,6 +113,8 @@ class PrepareDirectories(SimpleTask):
         self.warc_prefix = warc_prefix
 
     def process(self, item):
+        start_time =  time.strftime('%Y%m%d-%H%M%S')
+
         item_name = item['item_name']
         escaped_item_name = item_name.replace(':', '_').replace('/', '_').replace('~', '_')
         dirname = '/'.join((item['data_dir'], escaped_item_name))
@@ -123,8 +125,9 @@ class PrepareDirectories(SimpleTask):
         os.makedirs(dirname)
 
         item['item_dir'] = dirname
+        item['start_time'] = start_time
         item['warc_file_base'] = '%s-%s-%s' % (self.warc_prefix, escaped_item_name[:50],
-                                               time.strftime('%Y%m%d-%H%M%S'))
+                                               start_time)
 
         open('%(item_dir)s/%(warc_file_base)s.warc.gz' % item, 'w').close()
         open('%(item_dir)s/%(warc_file_base)s.defer-urls.txt' % item, 'w').close()
