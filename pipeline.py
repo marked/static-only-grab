@@ -27,9 +27,9 @@ from seesaw.util import find_executable
 
 import json
 
-# check the seesaw version  #TODO choose version
-if StrictVersion(seesaw.__version__) < StrictVersion('0.8.5'):
-    raise Exception('This pipeline needs seesaw version 0.8.5 or higher.')
+# check the seesaw version
+if StrictVersion(seesaw.__version__) < StrictVersion('0.10.3'):
+    raise Exception('This pipeline needs seesaw version 0.10.3 or higher.')
 
 
 ###########################################################################
@@ -38,12 +38,9 @@ if StrictVersion(seesaw.__version__) < StrictVersion('0.8.5'):
 # WGET_LUA will be set to the first path that
 # 1. does not crash with --version, and
 # 2. prints the required version string
-#TODO choose version
 WGET_LUA = find_executable(
     'Wget+Lua',
     ['GNU Wget 1.20.3-at-lua'],
-    # ['GNU Wget 1.20.3-at-lua'],
-    # ['GNU Wget 1.14.lua.20160530-955376b'],
     [
         './wget-lua',
         './wget-lua-warrior',
