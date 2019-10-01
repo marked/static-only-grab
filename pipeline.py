@@ -113,7 +113,7 @@ class PrepareDirectories(SimpleTask):
         self.warc_prefix = warc_prefix
 
     def process(self, item):
-        start_time =  time.strftime('%Y%m%d-%H%M%S')
+        start_time = time.strftime('%Y%m%d-%H%M%S')
 
         item_name = item['item_name']
         escaped_item_name = item_name.replace(':', '_').replace('/', '_').replace('~', '_')
@@ -126,7 +126,7 @@ class PrepareDirectories(SimpleTask):
 
         item['item_dir'] = dirname
         item['start_time'] = start_time
-        item['warc_file_base'] = '%s-%s-%s' % (self.warc_prefix, escaped_item_name[:50], start_time)
+        item['warc_file_base'] = '%s-%s-%s'    % (self.warc_prefix, escaped_item_name[:50],      start_time)
         item['warc_new_base']  = '%s-%s.%s-%s' % (self.warc_prefix, escaped_item_name[:50], '|', start_time)
 
         open('%(item_dir)s/%(warc_file_base)s.warc.gz' % item, 'w').close()
@@ -219,7 +219,7 @@ class WgetArgs(object):
             wget_urls = []
             defer_assets = []
             photo_ids = []
-            item_version = -1
+            item_version = None
 
             item_type_dir = item_type.split('_', 3)[2]
             job_file_url = ('https://raw.githubusercontent.com/marked/yourshot-static-items/master/'
@@ -255,7 +255,7 @@ class WgetArgs(object):
                     print("T>  " + task_line)  #debug
                     wget_urls.append(task_line)
 
-            if  item_version == -1:
+            if item_version is None:
                 item_version = len(wget_urls)
             item["version"] = item_version
             print("URIs ToDo: {}".format(len(wget_urls)))
