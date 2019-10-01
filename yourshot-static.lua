@@ -92,7 +92,7 @@ wget.callbacks.before_exit = function(exit_status, exit_status_string)
     io.stdout:write("Abort/Sending: " .. "wget.exits.IO_FAIL\n\n")
     return wget.exits.IO_FAIL
   end
-  if code_counts[200] == todo_url_count and table.count(code_counts) == 1 and todo_url_count > 0 then
+  if table.count(code_counts) == 1 and code_counts[200] == tonumber(todo_url_count) and code_counts[200] > 0 then
     io.stdout:write("Sending: " .. "wget.exits.SUCCESS\n\n")
     return wget.exits.SUCCESS
   else

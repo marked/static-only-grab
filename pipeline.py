@@ -62,7 +62,7 @@ if not WGET_LUA:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20190928.00'
+VERSION = '20190930.00'
 USER_AGENT = 'ArchiveTeam'
 TRACKER_ID = 'yourshot'
 #TRACKER_HOST = 'tracker.archiveteam.org'  #prod
@@ -165,7 +165,6 @@ def stats_id_function(item):
 
     return d
 
-
 class WgetArgs(object):
     post_chars = string.digits + 'abcdef'
 
@@ -220,7 +219,7 @@ class WgetArgs(object):
             photo_ids = []
 
             item_type_dir = item_type.split('_',3)[2]
-            job_file_url = 'https://raw.githubusercontent.com/marked/yourshot-static-items/master/' + item_type_dir + '/' + item_value  #dev | #test
+            job_file_url = 'https://raw.githubusercontent.com/marked/yourshot-static-items/master/' + item_type_dir + '/' + item_value  #prod | #test
 
             print("Job location: " + job_file_url)  #debug
             job_file_resp = http_client.fetch(job_file_url, method='GET') #dev
@@ -232,7 +231,7 @@ class WgetArgs(object):
                     print("Tv  " + task_line) #debug
                     task_line_resp = http_client.fetch(task_line, method='GET')
                     api_resp = json.loads(task_line_resp.body.decode('utf-8', 'ignore'))
-                    for photo_obj in api_resp["results"][1:3]: #test
+                    for photo_obj in api_resp["results"]:
                         wget_args.extend([  '--warc-header', 'yourshot-photo-id: {}'.format(photo_obj["photo_id"])  ])
                         for photo_size in photo_obj["thumbnails"]:
                             wget_urls.append("https://yourshot.nationalgeographic.com" + photo_obj["thumbnails"][photo_size])
@@ -251,7 +250,7 @@ class WgetArgs(object):
 
             print("URIs ToDo: {}".format(len(wget_urls)))
             wget_args.extend(wget_urls)
-            item["todo_urls_count"] = len(wget_urls)
+            item["todo_url_count"] = str(len(wget_urls))
 
             #print("\nD^      ", end="") #test
             #print("\nD^      ".join(defer_assets)) #test

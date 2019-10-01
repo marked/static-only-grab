@@ -9,4 +9,3 @@ OR
 
 run-pipeline pipeline.py $USERNAME
 
-TODO: add check that wget got the same # of URLs as python sent
