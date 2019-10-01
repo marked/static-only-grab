@@ -127,8 +127,9 @@ class PrepareDirectories(SimpleTask):
         item['warc_file_base'] = '%s-%s-%s' % (self.warc_prefix, escaped_item_name[:50],
             time.strftime('%Y%m%d-%H%M%S'))
 
-        open('%(item_dir)s/%(warc_file_base)s.warc.gz' % item, 'w').close()
 
+        open('%(item_dir)s/%(warc_file_base)s.warc.gz' % item, 'w').close()
+        open('%(item_dir)s/%(warc_file_base)s.defer-urls.txt' % item, 'w').close()
 
 class MoveFiles(SimpleTask):
     def __init__(self):
