@@ -126,8 +126,8 @@ class PrepareDirectories(SimpleTask):
 
         item['item_dir'] = dirname
         item['start_time'] = start_time
-        item['warc_file_base'] = '%s-%s-%s' % (self.warc_prefix, escaped_item_name[:50],
-                                               start_time)
+        item['warc_file_base'] = '%s-%s-%s' % (self.warc_prefix, escaped_item_name[:50], start_time)
+        item['warc_new_base']  = '%s-%s.%s-%s' % (self.warc_prefix, escaped_item_name[:50], '|', start_time)
 
         open('%(item_dir)s/%(warc_file_base)s.warc.gz' % item, 'w').close()
         open('%(item_dir)s/%(warc_file_base)s.defer-urls.txt' % item, 'w').close()
@@ -142,10 +142,12 @@ class MoveFiles(SimpleTask):
         if os.path.exists('%(item_dir)s/%(warc_file_base)s.warc' % item):
             raise Exception('Please compile wget with zlib support!')
 
+        warc_new_base = item['warc_new_base']
+        item['warc_new_base'] = warc_new_base.replace("|", str(item['version']))
         os.rename('%(item_dir)s/%(warc_file_base)s.warc.gz' % item,
-                  '%(data_dir)s/%(warc_file_base)s.warc.gz' % item)
+                  '%(data_dir)s/%(warc_new_base)s.warc.gz' % item)
         os.rename('%(item_dir)s/%(warc_file_base)s.defer-urls.txt' % item,
-                  '%(data_dir)s/%(warc_file_base)s.defer-urls.txt' % item)
+                  '%(data_dir)s/%(warc_new_base)s.defer-urls.txt' % item)
 
         shutil.rmtree('%(item_dir)s' % item)
 
@@ -217,6 +219,7 @@ class WgetArgs(object):
             wget_urls = []
             defer_assets = []
             photo_ids = []
+            item_version = -1
 
             item_type_dir = item_type.split('_', 3)[2]
             job_file_url = ('https://raw.githubusercontent.com/marked/yourshot-static-items/master/'
@@ -243,6 +246,7 @@ class WgetArgs(object):
                         defer_assets.append(photo_obj["owner"]["avatar_url"])
 
                     print("\nIDs: {}/{}".format(len(api_resp["results"]), api_resp["count"]))  #debug
+                    item_version = api_resp['count']
 
                     with open('%(item_dir)s/%(warc_file_base)s.defer-urls.txt' % item, 'w') as fh:
                         fh.write("IDs: {}/{}\n".format(len(api_resp["results"]), api_resp["count"]))
@@ -251,6 +255,9 @@ class WgetArgs(object):
                     print("T>  " + task_line)  #debug
                     wget_urls.append(task_line)
 
+            if  item_version == -1:
+                item_version = len(wget_urls)
+            item["version"] = item_version
             print("URIs ToDo: {}".format(len(wget_urls)))
             wget_args.extend(wget_urls)
             item["todo_url_count"] = str(len(wget_urls))
