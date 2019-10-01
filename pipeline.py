@@ -169,14 +169,6 @@ def stats_id_function(item):
 
 
 class WgetArgs(object):
-    post_chars = string.digits + 'abcdef'
-
-    def int_to_str(self, i):
-        d, m = divmod(i, 16)
-        if d > 0:
-            return self.int_to_str(d) + self.post_chars[m]
-        return self.post_chars[m]
-
     def realize(self, item):
         wget_args = [
             WGET_LUA,
