@@ -39,7 +39,7 @@ if StrictVersion(seesaw.__version__) < StrictVersion('0.8.5'):
 # 1. does not crash with --version, and
 # 2. prints the required version string
 WGET_LUA = find_executable(
-    'Wget+Lua',
+    'Wget+Lua',  #TODO
     ['GNU Wget 1.20.3-at-lua'],
     #['GNU Wget 1.14.lua.20160530-955376b'],
     [
@@ -65,8 +65,8 @@ if not WGET_LUA:
 VERSION = '20190930.00'
 USER_AGENT = 'ArchiveTeam'
 TRACKER_ID = 'yourshot'
-#TRACKER_HOST = 'tracker.archiveteam.org'  #prod
-TRACKER_HOST = 'localhost'  #test
+#TRACKER_HOST = 'tracker.archiveteam.org'  #prod-env
+TRACKER_HOST = 'localhost'  #dev-env
 
 
 ###########################################################################
@@ -198,6 +198,7 @@ class WgetArgs(object):
             '--warc-header', 'operator: Archive Team',
             '--warc-header', 'yourshot-static-dld-script-version: ' + VERSION,
             '--warc-header', ItemInterpolation('yourshot-static-item: %(item_name)s'),
+            #--warc-header yourshot-photo-id: ... filled in below
             #'--header', 'Accept-Encoding: gzip',
             #'--compression', 'gzip'
             ###changed flags####
@@ -219,10 +220,10 @@ class WgetArgs(object):
             photo_ids = []
 
             item_type_dir = item_type.split('_',3)[2]
-            job_file_url = 'https://raw.githubusercontent.com/marked/yourshot-static-items/master/' + item_type_dir + '/' + item_value  #prod | #test
+            job_file_url = 'https://raw.githubusercontent.com/marked/yourshot-static-items/master/' + item_type_dir + '/' + item_value  #prod-env | #dev-env
 
             print("Job location: " + job_file_url)  #debug
-            job_file_resp = http_client.fetch(job_file_url, method='GET') #dev
+            job_file_resp = http_client.fetch(job_file_url, method='GET')
             for task_line in job_file_resp.body.decode('utf-8', 'ignore').splitlines():
                 task_line = task_line.strip()
                 if len(task_line) == 0:
@@ -242,7 +243,7 @@ class WgetArgs(object):
                     print("\nIDs: {}/{}".format(len(api_resp["results"]),api_resp["count"])) #debug
 
                     with open('%(item_dir)s/%(warc_file_base)s.defer-urls.txt' % item, 'w') as fh:
-                        fh.write("IDs: {}/{}\n".format(len(api_resp["results"]),api_resp["count"])) #debug
+                        fh.write("IDs: {}/{}\n".format(len(api_resp["results"]),api_resp["count"]))
                         fh.writelines("%s\n" % asset for asset in defer_assets)
                 elif item_type == 'ys_static_urls':
                     print("T>  " + task_line) #debug
@@ -252,8 +253,8 @@ class WgetArgs(object):
             wget_args.extend(wget_urls)
             item["todo_url_count"] = str(len(wget_urls))
 
-            #print("\nD^      ", end="") #test
-            #print("\nD^      ".join(defer_assets)) #test
+            #print("\nD^      ", end="") #debug
+            #print("\nD^      ".join(defer_assets)) #debug
             http_client.close()
         else:
             raise Exception('Unknown item')
@@ -302,7 +303,7 @@ pipeline = Pipeline(
         defaults={'downloader': downloader, 'version': VERSION},
         file_groups={
             'data': [
-                ItemInterpolation('%(item_dir)s/%(warc_file_base)s.warc.gz')  #TODO
+                ItemInterpolation('%(item_dir)s/%(warc_file_base)s.warc.gz')  #TODO ?
             ]
         },
         id_function=stats_id_function,

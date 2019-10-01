@@ -18,6 +18,8 @@ host = "https://yourshot.nationalgeographic.com"
 wget.callbacks.get_urls = function(file, url, is_css, iri)
   local next_urls = { }
 
+  -- sending an /api link will cause JSON recursion however
+  -- with 2019-10-01 pipeline no such links are sent as handled in python
   if string.match(url, host .. "/api") then  -- expect JSON
     local resp_fh = assert(io.open(file))
     local resp_json = resp_fh:read('*all')
