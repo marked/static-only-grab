@@ -116,7 +116,8 @@ class CheckBan(SimpleTask):
         msg = None
         http_client = httpclient.HTTPClient()
         try:
-            response = http_client.fetch("https://yourshot.nationalgeographic.com/api/v3/photos/search/")
+            response = http_client.fetch("https://yourshot.nationalgeographic.com/static/img/navbar/yourshot-logo.svg") # static asset
+            # response = http_client.fetch("https://yourshot.nationalgeographic.com/api/v3/photos/search/")  # dynamic
         except httpclient.HTTPError as e:
             msg = "Failed to get CheckBan URL: " + str(e)
             item.log_output(msg)
