@@ -61,11 +61,12 @@ if not WGET_LUA:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20191001.00'
+VERSION = '20191007.00'
 USER_AGENT = 'ArchiveTeam'
-TRACKER_ID = 'yourshot'
+TRACKER_ID = 'yourshot-static'
 # TRACKER_HOST = 'tracker.archiveteam.org'  #prod-env
-TRACKER_HOST = 'localhost'  #dev-env
+# TRACKER_HOST = 'localhost'  #dev-env
+TRACKER_HOST = 'tracker-dev:9080'  #dev-env
 
 
 ###########################################################################
@@ -142,8 +143,7 @@ class MoveFiles(SimpleTask):
         if os.path.exists('%(item_dir)s/%(warc_file_base)s.warc' % item):
             raise Exception('Please compile wget with zlib support!')
 
-        warc_new_base = item['warc_new_base']
-        item['warc_new_base'] = warc_new_base.replace("|", str(item['version']))
+        item['warc_new_base'] = item['warc_new_base'].replace("|", str(item['version']))
         os.rename('%(item_dir)s/%(warc_file_base)s.warc.gz' % item,
                   '%(data_dir)s/%(warc_new_base)s.warc.gz' % item)
         os.rename('%(item_dir)s/%(warc_file_base)s.defer-urls.txt' % item,
@@ -330,8 +330,8 @@ pipeline = Pipeline(
                                       downloader=downloader,
                                       version=VERSION,
                                       files=[
-                                              ItemInterpolation('%(data_dir)s/%(warc_file_base)s.warc.gz'),
-                                              ItemInterpolation('%(data_dir)s/%(warc_file_base)s.defer-urls.txt')
+                                              ItemInterpolation('%(data_dir)s/%(warc_new_base)s.warc.gz'),
+                                              ItemInterpolation('%(data_dir)s/%(warc_new_base)s.defer-urls.txt')
                                             ],
                                       rsync_target_source_path=ItemInterpolation('%(data_dir)s/'),
                                       rsync_extra_args=[
