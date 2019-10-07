@@ -258,9 +258,13 @@ class WgetArgs(object):
             if item_version is None:
                 item_version = len(wget_urls)
             item["version"] = item_version
-            print("URIs ToDo: {}".format(len(wget_urls)))
-            wget_args.extend(wget_urls)
             item["todo_url_count"] = str(len(wget_urls))
+
+            print("URIs ToDo: {}".format(len(wget_urls)))
+            if len(wget_urls) == 0:
+                wget_args.append("-V")
+            else:
+                wget_args.extend(wget_urls)
 
             # print("\nD^      ", end="")  #debug
             # print("\nD^      ".join(defer_assets))  #debug
