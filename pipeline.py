@@ -150,7 +150,9 @@ class MoveFiles(SimpleTask):
                   '%(data_dir)s/%(warc_new_base)s.defer-urls.txt' % item)
 
         shutil.rmtree('%(item_dir)s' % item)
-
+        item['files']=[ ItemInterpolation('%(data_dir)s/%(warc_new_base)s.defer-urls.txt') ]
+        if item['todo_url_count'] != '0':
+            item['files'].append( ItemInterpolation('%(data_dir)s/%(warc_new_base)s.warc.gz') )
 
 def get_hash(filename):
     with open(filename, 'rb') as in_file:
@@ -333,10 +335,7 @@ pipeline = Pipeline(
                     UploadWithTracker('http://%s/%s' % (TRACKER_HOST, TRACKER_ID),
                                       downloader=downloader,
                                       version=VERSION,
-                                      files=[
-                                              ItemInterpolation('%(data_dir)s/%(warc_new_base)s.warc.gz'),
-                                              ItemInterpolation('%(data_dir)s/%(warc_new_base)s.defer-urls.txt')
-                                            ],
+                                      files=ItemValue('files'),
                                       rsync_target_source_path=ItemInterpolation('%(data_dir)s/'),
                                       rsync_extra_args=[
                                                          '--recursive',
