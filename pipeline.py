@@ -61,12 +61,11 @@ if not WGET_LUA:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20191007.00'
+VERSION = '20191008.00'
 USER_AGENT = 'ArchiveTeam'
 TRACKER_ID = 'yourshot-static'
 # TRACKER_HOST = 'tracker.archiveteam.org'  #prod-env
-# TRACKER_HOST = 'localhost'  #dev-env
-TRACKER_HOST = 'tracker-dev:9080'  #dev-env
+TRACKER_HOST = 'tracker-dev'  #dev-env
 
 
 ###########################################################################
@@ -114,6 +113,7 @@ class CheckBan(SimpleTask):
 
     def process(self, item):
         msg = None
+        httpclient.AsyncHTTPClient.configure(None, defaults=dict(user_agent=USER_AGENT))
         http_client = httpclient.HTTPClient()
         try:
             response = http_client.fetch("https://yourshot.nationalgeographic.com/static/img/navbar/yourshot-logo.svg") # static asset
