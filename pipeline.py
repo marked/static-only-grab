@@ -350,19 +350,6 @@ pipeline = Pipeline(
         id_function=stats_id_function,
     ),
     MoveFiles(),
-    LimitConcurrent(NumberConfigValue(min=1, max=20, default='20',
-                                      name='shared:rsync_threads', title='Rsync threads',
-                                      description='The maximum number of concurrent uploads.'),
-                    UploadWithTracker('http://%s/%s' % (TRACKER_HOST, TRACKER_ID),
-                                      downloader=downloader,
-                                      version=VERSION,
-                                      files=ItemValue('files'),
-                                      rsync_target_source_path=ItemInterpolation('%(data_dir)s/'),
-                                      rsync_extra_args=[
-                                                         '--recursive',
-                                                         '--partial',
-                                                         '--partial-dir', '.rsync-tmp',
-                                                       ]),),
     SendDoneToTracker(
         tracker_url='http://%s/%s' % (TRACKER_HOST, TRACKER_ID),
         stats=ItemValue('stats')
