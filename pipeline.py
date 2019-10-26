@@ -25,7 +25,6 @@ from seesaw.pipeline import Pipeline
 from seesaw.project import Project
 from seesaw.util import find_executable
 
-import json
 
 # check the seesaw version
 if StrictVersion(seesaw.__version__) < StrictVersion('0.10.3'):
