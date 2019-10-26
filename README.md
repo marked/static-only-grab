@@ -1,6 +1,7 @@
 # static-only-grab
-Grabs URLs (images or non-recursive html), exports other assets to text files
+Grabs URLs (images or non-recursive html)
 
 run-pipeline3 pipeline.py $USERNAME
 
-Also: https://github.com/marked/static-only-items
+Todo: support multi-url test files
+Todo: support multi-url json urls
