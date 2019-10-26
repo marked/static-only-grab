@@ -61,11 +61,11 @@ if not WGET_LUA:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20191008.00'
+VERSION = '20191026.00'
 USER_AGENT = 'ArchiveTeam'
 TRACKER_ID = 'yourshot-static'
 # TRACKER_HOST = 'tracker.archiveteam.org'  #prod-env
-TRACKER_HOST = 'tracker-dev'  #dev-env
+TRACKER_HOST = 'tracker-test.ddns.net'  #dev-env
 
 
 ###########################################################################
@@ -248,14 +248,14 @@ class WgetArgs(object):
                             + item_type_dir + '/' + item_value)  #prod-env | #dev-env
 
             print("Job location: " + job_file_url)  #debug
-            job_file_resp = http_client.fetch(job_file_url, method='GET')
+            job_file_resp = http_client.fetch(job_file_url, method='GET')  # url to github
             for task_line in job_file_resp.body.decode('utf-8', 'ignore').splitlines():
                 task_line = task_line.strip()
                 if len(task_line) == 0:
                     continue
                 if item_type == 'ys_static_json':
                     print("Tv  " + task_line)  #debug
-                    task_line_resp = http_client.fetch(task_line, method='GET')
+                    task_line_resp = http_client.fetch(task_line, method='GET')  # url to ys json api
                     api_resp = json.loads(task_line_resp.body.decode('utf-8', 'ignore'))
                     for photo_obj in api_resp["results"]:
                         wget_args.extend(['--warc-header',
