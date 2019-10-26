@@ -1,6 +1,6 @@
-# yourshot-static-grab
-Parses JSON API, grabs URLs (images or non-recursive html), exports other assets to text files
+# static-only-grab
+Grabs URLs (images or non-recursive html), exports other assets to text files
 
-run-pipeline pipeline.py $USERNAME
+run-pipeline3 pipeline.py $USERNAME
 
-Also: https://github.com/marked/yourshot-static-items
+Also: https://github.com/marked/static-only-items

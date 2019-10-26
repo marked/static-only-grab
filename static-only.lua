@@ -9,51 +9,7 @@ local todo_url_count = os.getenv('todo_url_count')
 local done_url_count = 0
 local abortgrab = false
 local code_counts = { }
-
-json_lib = require "json"
-host = "https://yourshot.nationalgeographic.com"
-
-------------------------------------------------------------------------------------------------
-
-wget.callbacks.get_urls = function(file, url, is_css, iri)
-  local next_urls = { }
-
-  -- sending an /api link will cause JSON recursion however
-  -- with 2019-10-01 pipeline no such links are sent as handled in python
-  if string.match(url, host .. "/api") then  -- expect JSON
-    local resp_fh = assert(io.open(file))
-    local resp_json = resp_fh:read('*all')
-    resp_fh:close()
-
-    results = json_lib.decode(resp_json)["results"]
-
-    for result_index, result_body in pairs(results) do
-      local frame_path = result_body["detail_url"]
-      io.stdout:write(result_index, frame_path)
-      io.stdout:flush()
-      table.insert(next_urls,
-        {
-          url = host .. frame_path,
-          link_expect_html = 1,
-          link_expect_css = 0
-        }
-      )
-
-      for img_res, img_path in pairs(result_body["thumbnails"]) do
-        print(img_res, img_path)
-        table.insert(next_urls,
-          {
-            url = host .. img_path,
-            link_expect_html = 0,
-            link_expect_css = 0
-          }
-        )
-      end  -- for thumbnails
-    end  -- for results
-  end -- if JSON
-
-  return next_urls
-end
+local error_time = 1
 
 ------------------------------------------------------------------------------------------------
 
@@ -70,17 +26,27 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
     code_counts[status_code] = 1 + code_counts[status_code]
   end
 
-  if status_code ~= 200 then
+  if status_code ~= 200 and status_code ~= 302 and status_code ~= 403 then
     abortgrab = true
   end
 
-  if abortgrab == true then
+
+  if status_code == 200 then
+    error_time = 1
+  end
+
+  if status_code == 403 then
+    os.execute("sleep " .. tonumber(error_time))
+    error_time = error_time * 2
+  end
+
+  if abortgrab == true or error_time > 15*60 then
     io.stdout:write("ABORTING...\n")
     io.stdout:flush()
     return wget.actions.ABORT --  Wget will abort() and exit immediately
   end
 
-  return wget.actions.EXIT  -- Finish this URL
+  return wget.actions.NOTHING  -- Finish this URL
 end
 
 ------------------------------------------------------------------------------------------------
@@ -94,7 +60,7 @@ wget.callbacks.before_exit = function(exit_status, exit_status_string)
     io.stdout:write("Abort/Sending: " .. "wget.exits.IO_FAIL\n\n")
     return wget.exits.IO_FAIL
   end
-  if table.count(code_counts) == 1 and code_counts[200] == tonumber(todo_url_count) and code_counts[200] > 0 then
+  if (code_counts[200] == tonumber(todo_url_count)) and code_counts[200] > 0 then
     io.stdout:write("Sending: " .. "wget.exits.SUCCESS\n\n")
     return wget.exits.SUCCESS
   else

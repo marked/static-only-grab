@@ -61,9 +61,9 @@ if not WGET_LUA:
 #
 # Update this each time you make a non-cosmetic change.
 # It will be added to the WARC files and reported to the tracker.
-VERSION = '20191026.00'
+VERSION = '20191026.01'
 USER_AGENT = 'ArchiveTeam'
-TRACKER_ID = 'yourshot-static'
+TRACKER_ID = 'static-only'
 # TRACKER_HOST = 'tracker.archiveteam.org'  #prod-env
 TRACKER_HOST = 'tracker-test.ddns.net'  #dev-env
 
@@ -116,8 +116,8 @@ class CheckBan(SimpleTask):
         httpclient.AsyncHTTPClient.configure(None, defaults=dict(user_agent=USER_AGENT))
         http_client = httpclient.HTTPClient()
         try:
-            response = http_client.fetch("https://yourshot.nationalgeographic.com/static/img/navbar/yourshot-logo.svg") # static asset
-            # response = http_client.fetch("https://yourshot.nationalgeographic.com/api/v3/photos/search/")  # dynamic
+            # response = http_client.fetch("https://yourshot.nationalgeographic.com/static/img/navbar/yourshot-logo.svg") # static asset
+            response = http_client.fetch("https://yourshot.nationalgeographic.com/api/v3/photos/search/")  # dynamic
         except httpclient.HTTPError as e:
             msg = "Failed to get CheckBan URL: " + str(e)
             item.log_output(msg)
@@ -137,7 +137,13 @@ class PrepareDirectories(SimpleTask):
         start_time = time.strftime('%Y%m%d-%H%M%S')
 
         item_name = item['item_name']
-        escaped_item_name = item_name.replace(':', '_').replace('/', '_').replace('~', '_')
+        assert ':' in item_name
+        item_type, item_fn, item_value = item_name.split(':', 2)
+        item['item_type'] = item_type
+        item['item_value'] = item_value
+        item['item_fn'] = item_fn
+
+        escaped_item_name = item_fn.replace(':', '_').replace('/', '_').replace('~', '_')
         dirname = '/'.join((item['data_dir'], escaped_item_name))
 
         if os.path.isdir(dirname):
@@ -148,10 +154,8 @@ class PrepareDirectories(SimpleTask):
         item['item_dir'] = dirname
         item['start_time'] = start_time
         item['warc_file_base'] = '%s-%s-%s'    % (self.warc_prefix, escaped_item_name[:50],      start_time)
-        item['warc_new_base']  = '%s-%s.%s-%s' % (self.warc_prefix, escaped_item_name[:50], '|', start_time)
 
         open('%(item_dir)s/%(warc_file_base)s.warc.gz' % item, 'w').close()
-        open('%(item_dir)s/%(warc_file_base)s.defer-urls.txt' % item, 'w').close()
 
 
 class MoveFiles(SimpleTask):
@@ -163,16 +167,11 @@ class MoveFiles(SimpleTask):
         if os.path.exists('%(item_dir)s/%(warc_file_base)s.warc' % item):
             raise Exception('Please compile wget with zlib support!')
 
-        item['warc_new_base'] = item['warc_new_base'].replace("|", str(item['version']))
         os.rename('%(item_dir)s/%(warc_file_base)s.warc.gz' % item,
-                  '%(data_dir)s/%(warc_new_base)s.warc.gz' % item)
-        os.rename('%(item_dir)s/%(warc_file_base)s.defer-urls.txt' % item,
-                  '%(data_dir)s/%(warc_new_base)s.defer-urls.txt' % item)
+                  '%(data_dir)s/%(warc_file_base)s.warc.gz' % item)
 
         shutil.rmtree('%(item_dir)s' % item)
-        item['files']=[ ItemInterpolation('%(data_dir)s/%(warc_new_base)s.defer-urls.txt') ]
-        if item['todo_url_count'] != '0':
-            item['files'].append( ItemInterpolation('%(data_dir)s/%(warc_new_base)s.warc.gz') )
+        item['files'] = [ ItemInterpolation('%(data_dir)s/%(warc_file_base)s.warc.gz') ]
 
 def get_hash(filename):
     with open(filename, 'rb') as in_file:
@@ -181,7 +180,7 @@ def get_hash(filename):
 
 CWD = os.getcwd()
 PIPELINE_SHA1 = get_hash(os.path.join(CWD, 'pipeline.py'))
-LUA_SHA1 = get_hash(os.path.join(CWD, 'yourshot-static.lua'))
+LUA_SHA1 = get_hash(os.path.join(CWD, 'static-only.lua'))
 
 
 def stats_id_function(item):
@@ -200,9 +199,9 @@ class WgetArgs(object):
         wget_args = [
             WGET_LUA,
             '-U', USER_AGENT,
-            '-nv',
+            #'-nv',
             '--no-cookies',
-            '--lua-script', 'yourshot-static.lua',
+            '--lua-script', 'static-only.lua',
             '-o', ItemInterpolation('%(item_dir)s/wget.log'),
             '--no-check-certificate',
             '--output-document', ItemInterpolation('%(item_dir)s/wget.tmp'),
@@ -213,86 +212,48 @@ class WgetArgs(object):
             # '--no-parent',
             # '--page-requisites',
             '--timeout', '30',
-            '--tries', 'inf',
-            # '--domains', 'nationalgeographic.com',
+            # '--tries', 'inf',
+            # '--domains', '.com',
             # '--span-hosts',
             '--waitretry', '30',
             '--warc-file', ItemInterpolation('%(item_dir)s/%(warc_file_base)s'),
             '--warc-header', 'operator: Archive Team',
-            '--warc-header', 'yourshot-static-dld-script-version: ' + VERSION,
-            '--warc-header', ItemInterpolation('yourshot-static-item: %(item_name)s'),
-            # --warc-header yourshot-photo-id: ... filled in below
+            '--warc-header', 'static-only-dld-script-version: ' + VERSION,
+            '--warc-header', ItemInterpolation('static-only-item: %(item_name)s'),
+            # --warc-header static-url-id: ... filled in below
             # '--header', 'Accept-Encoding: gzip',
             # '--compression', 'gzip'
             # changed flags #
         ]
 
-        item_name = item['item_name']
-        assert ':' in item_name
-        item_type, item_value = item_name.split(':', 1)
+        item_type = item["item_type"]
+        item_value = item["item_value"]
 
-        item['item_type'] = item_type
-        item['item_value'] = item_value
+        wget_urls = []
 
-        httpclient.AsyncHTTPClient.configure(None, defaults=dict(user_agent=USER_AGENT))
-        http_client = httpclient.HTTPClient()
+        task_line = item_value
 
-        if item_type.startswith('ys_static_'):
-            wget_urls = []
-            defer_assets = []
-            photo_ids = []
-            item_version = None
+        #if len(task_line) == 0:
+        #    continue
+        # elif item_type == 'static_job_json': #  TODO
+        # elif item_type == 'static_job_urls': #  TODO
 
-            item_type_dir = item_type.split('_', 3)[2]
-            job_file_url = ('https://raw.githubusercontent.com/marked/yourshot-static-items/master/'
-                            + item_type_dir + '/' + item_value)  #prod-env | #dev-env
-
-            print("Job location: " + job_file_url)  #debug
-            job_file_resp = http_client.fetch(job_file_url, method='GET')  # url to github
-            for task_line in job_file_resp.body.decode('utf-8', 'ignore').splitlines():
-                task_line = task_line.strip()
-                if len(task_line) == 0:
-                    continue
-                if item_type == 'ys_static_json':
-                    print("Tv  " + task_line)  #debug
-                    task_line_resp = http_client.fetch(task_line, method='GET')  # url to ys json api
-                    api_resp = json.loads(task_line_resp.body.decode('utf-8', 'ignore'))
-                    for photo_obj in api_resp["results"]:
-                        wget_args.extend(['--warc-header',
-                                          'yourshot-photo-id: {}'.format(photo_obj["photo_id"])])
-                        for photo_size in photo_obj["thumbnails"]:
-                            wget_urls.append("https://yourshot.nationalgeographic.com"
-                                             + photo_obj["thumbnails"][photo_size])
-                        defer_assets.append(photo_obj["detail_url"])
-                        defer_assets.append(photo_obj["owner"]["profile_url"])
-                        defer_assets.append(photo_obj["owner"]["avatar_url"])
-
-                    print("\nIDs: {}/{}".format(len(api_resp["results"]), api_resp["count"]))  #debug
-                    item_version = api_resp['count']
-
-                    with open('%(item_dir)s/%(warc_file_base)s.defer-urls.txt' % item, 'w') as fh:
-                        fh.write("IDs: {}/{}\n".format(len(api_resp["results"]), api_resp["count"]))
-                        fh.writelines("%s\n" % asset for asset in defer_assets)
-                elif item_type == 'ys_static_urls':
-                    print("T>  " + task_line)  #debug
-                    wget_urls.append(task_line)
-
-            if item_version is None:
-                item_version = len(wget_urls)
-            item["version"] = item_version
-            item["todo_url_count"] = str(len(wget_urls))
-
-            print("URIs ToDo: {}".format(len(wget_urls)))
-            if len(wget_urls) == 0:
-                wget_args.append("-V")
-            else:
-                wget_args.extend(wget_urls)
-
-            # print("\nD^      ", end="")  #debug
-            # print("\nD^      ".join(defer_assets))  #debug
-            http_client.close()
+        if item_type == 'static_url':
+            print("T>  " + task_line)  #debug
+            wget_urls.append(task_line)
         else:
             raise Exception('Unknown item')
+
+        item["todo_url_count"] = str(len(wget_urls))
+
+        print("URIs ToDo: {}".format(len(wget_urls)))
+        if len(wget_urls) == 0:
+            wget_args.append("-V")
+        else:
+            wget_args.extend(wget_urls)
+
+        # print("\nD^      ".join(defer_assets))  #debug
+        # print("\nD^      ", end="")  #debug
 
         if 'bind_address' in globals():
             wget_args.extend(['--bind-address', globals()['bind_address']])
@@ -310,27 +271,19 @@ class WgetArgs(object):
 # This will be shown in the warrior management panel. The logo should not
 # be too big. The deadline is optional.
 project = Project(
-    title='yourshot-static',
+    title='static-only',
     project_html='''
-<img class="project-logo" alt="logo" src="https://www.archiveteam.org/images/7/7a/Yourshot-logo.png" height="50px"/>
-<h2>https://yourshot.nationalgeographic.com
- <span class="links">
-  <a href="https://yourshot.nationalgeographic.com/">Website</a>
-  &middot;
-  <a href="http://tracker.archiveteam.org/yourshot-static/">Leaderboard</a>
- </span>
-</h2>
     '''
 )
 
 pipeline = Pipeline(
     CheckIP(),
-    CheckBan(),
+    # CheckBan(),
     GetItemFromTracker('http://%s/%s' % (TRACKER_HOST, TRACKER_ID), downloader, VERSION),
-    PrepareDirectories(warc_prefix='yourshot-static'),
+    PrepareDirectories(warc_prefix='static-only'),
     WgetDownload(
         WgetArgs(),
-        max_tries=0,              # 2,          #changed
+        max_tries=1,              # 2,          #changed
         accept_on_exit_code=[0],  # [0, 4, 8],  #changed
         env={
             'item_dir': ItemValue('item_dir'),
@@ -350,6 +303,27 @@ pipeline = Pipeline(
         id_function=stats_id_function,
     ),
     MoveFiles(),
+    LimitConcurrent(NumberConfigValue(min=1, max=20, default='20',
+    name='shared:rsync_threads', title='Rsync threads',
+    description='The maximum number of concurrent uploads.'),
+        UploadWithTracker(
+            'http://%s/%s' % (TRACKER_HOST, TRACKER_ID),
+            downloader=downloader,
+            version=VERSION,
+            files=[
+                ItemInterpolation('%(data_dir)s/%(warc_file_base)s.warc.gz'),
+            ],
+            rsync_target_source_path=ItemInterpolation('%(data_dir)s/'),
+            rsync_extra_args=[
+                '--recursive',
+                '--partial',
+                '--partial-dir', '.rsync-tmp',
+                '--min-size', '1',
+                '--no-compress',
+                '--compress-level', '0'
+            ]
+        ),
+    ),
     SendDoneToTracker(
         tracker_url='http://%s/%s' % (TRACKER_HOST, TRACKER_ID),
         stats=ItemValue('stats')
